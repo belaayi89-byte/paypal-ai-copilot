@@ -1,0 +1,9 @@
+{
+  "name": "paypal-ai-copilot",
+  "version": "1.0.0",
+  "description": "AI copilot for PayPal - create invoices & payment links from natural language",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "license": "MIT",
+  "dependencies": { "express": "^4.19.2", "dotenv": "^16.4.5" }
+}

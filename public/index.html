@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PayPal AI Invoicing Copilot</title>
+<meta name="description" content="Turn plain English into real PayPal invoices, payment links and status with an AI copilot.">
+<style>
+  :root{
+    --bg:#0b1020; --panel:#111a33; --panel2:#16213f; --line:#22305c;
+    --txt:#eaf0ff; --muted:#9fb0d9; --brand:#0070ba; --accent:#2ec4ff;
+    --gold:#ffc439; --ok:#3ddc97; --err:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(1200px 600px at 80% -10%,#1b2a5e 0%,var(--bg) 60%);
+    color:var(--txt); display:flex; flex-direction:column;
+  }
+  header{
+    display:flex; align-items:center; gap:14px; padding:18px 26px;
+    border-bottom:1px solid var(--line); background:rgba(10,16,32,.7);
+  }
+  .logo{
+    width:40px;height:40px;border-radius:12px;
+    background:linear-gradient(135deg,var(--gold),#ffffff);
+    display:grid;place-items:center;color:#0b1020;font-weight:800;
+  }
+  h1{font-size:18px;margin:0}
+  h1 span{color:var(--gold)}
+  .tag{font-size:12px;color:var(--muted)}
+  main{flex:1;display:grid;grid-template-columns:1.1fr .9fr;gap:22px;padding:24px;max-width:1200px;margin:0 auto;width:100%}
+  @media(max-width:860px){main{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;min-height:0}
+  .card h2{font-size:14px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0 0 12px}
+  #chat{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-right:6px;min-height:340px;max-height:56vh}
+  .msg{display:flex;gap:10px;align-items:flex-start}
+  .bubble{padding:12px 14px;border-radius:14px;line-height:1.45;font-size:14px;white-space:pre-wrap;word-break:break-word}
+  .me{margin-left:auto;background:var(--brand);color:#fff;border-bottom-right-radius:4px;max-width:85%}
+  .bot{background:var(--panel2);border:1px solid var(--line);border-bottom-left-radius:4px;max-width:92%}
+  .bot b{color:var(--accent)}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);margin-right:6px}
+  form{display:flex;gap:8px;margin-top:14px}
+  input{flex:1;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:14px}
+  input:focus{outline:2px solid var(--accent);border-color:transparent}
+  button{padding:12px 18px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--accent));color:#fff;font-weight:700;cursor:pointer}
+  button:disabled{opacity:.6;cursor:progress}
+  .examples{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .chip{font-size:12px;padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);cursor:pointer}
+  .chip:hover{color:var(--txt);border-color:var(--accent)}
+  a{color:var(--accent)}
+  code{background:#0a0f1f;padding:2px 6px;border-radius:6px;font-size:12px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin-top:6px;font-size:13px}
+  .kv .k{color:var(--muted)}
+  .foot{font-size:11px;color:var(--muted);padding:14px 26px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">P</div>
+  <div>
+    <h1>PayPal <span>AI Invoicing Copilot</span></h1>
+    <div class="tag">Plain English in → real PayPal invoices, payment links and status out. Powered by the PayPal sandbox + an LLM.</div>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Copilot</h2>
+    <div id="chat"></div>
+    <div class="examples">
+      <span class="chip" data-q="Invoice Jane Cooper $1250 for brand redesign, due in 30 days">Invoice Jane Cooper $1,250</span>
+      <span class="chip" data-q="Create a $25 payment link for a logo sketch">Create a $25 payment link</span>
+      <span class="chip" data-q="What invoices are outstanding?">Show outstanding invoices</span>
+    </div>
+    <form id="f">
+      <input id="m" placeholder="Tell the copilot what to do…" autocomplete="off" required>
+      <button id="send">Send</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>How it works</h2>
+    <div id="how" class="bot bubble">
+      Type a request in plain English. The AI turns it into a structured PayPal action, then the app
+      calls the <b>PayPal sandbox</b> for real: create + send an invoice, open a payment link, or list
+      outstanding invoices — no clicks through a dashboard.
+      <div class="kv" style="margin-top:10px">
+        <span class="k">AI</span><span>parses intent → structured action</span>
+        <span class="k">PayPal</span><span>executes the action on the sandbox</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  Built for the PayPal AI Hackathon · PayPal sandbox environment · API keys stay in server-side env vars
+</footer>
+
+<script>
+const chat = document.getElementById('chat');
+const form = document.getElementById('f');
+const input = document.getElementById('m');
+const sendBtn = document.getElementById('send');
+
+function addMe(t){ const d=document.createElement('div'); d.className='msg me'; d.innerHTML='<div class="bubble"></div>'; d.querySelector('.bubble').textContent=t; chat.appendChild(d); chat.scrollTop=chat.scrollHeight; return d; }
+function addBot(html){ const d=document.createElement('div'); d.className='msg bot'; d.innerHTML='<div class="bubble">'+html+'</div>'; chat.appendChild(d); chat.scrollTop=chat.scrollHeight; return d; }
+
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{ input.value=c.dataset.q; form.requestSubmit(); }));
+
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const text = input.value.trim();
+  if(!text) return;
+  addMe(text);
+  input.value=''; sendBtn.disabled=true;
+  const thinking = addBot('<span class="pill">thinking</span>');
+  try {
+    const res = await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})});
+    const data = await res.json();
+    thinking.querySelector('.bubble').innerHTML = render(data);
+  } catch(err){
+    thinking.querySelector('.bubble').innerHTML = '⚠️ '+err.message;
+  } finally { sendBtn.disabled=false; }
+});
+
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function render(data){
+  if(!data.ok) return '⚠️ '+esc(data.error);
+  const p = data.parsed || {};
+  const r = data.result || {};
+  let h = '<b>'+esc(p.action)+'</b>';
+  if(r.type==='create_invoice'){
+    h += '<div class="kv"><span class="k">invoice</span><span><code>'+esc(r.data.invoiceId)+'</code></span>'
+      +'<span class="k">status</span><span>'+esc(r.data.status)+'</span></div>';
+    if(r.data.recipientViewUrl) h += '<div style="margin-top:8px"><a href="'+esc(r.data.recipientViewUrl)+'" target="_blank">View invoice →</a></div>';
+    if(r.data.sent && r.data.sent.error) h += '<div style="margin-top:6px;color:var(--gold)">send: '+esc(r.data.sent.error)+'</div>';
+  } else if(r.type==='list_invoices'){
+    const list = (r.data.invoices||[]);
+    h += '<div style="margin:6px 0">'+esc(r.data.total)+' invoice(s)</div>';
+    h += '<ul style="margin:0;padding-left:18px">'+ list.map(i=>'<li><code>'+esc(i.id)+'</code> — '+esc(i.recipient)+' · '+esc(i.status)+' · '+esc(i.currency)+' '+esc(i.total)+'</li>').join('')+'</ul>';
+  } else if(r.type==='create_order'){
+    h += '<div class="kv"><span class="k">order</span><span><code>'+esc(r.data.orderId)+'</code></span>'
+      +'<span class="k">status</span><span>'+esc(r.data.status)+'</span></div>';
+    if(r.data.approvalUrl) h += '<div style="margin-top:8px"><a href="'+esc(r.data.approvalUrl)+'" target="_blank">Open payment link →</a></div>';
+  } else {
+    h += '<ul style="margin:6px 0;padding-left:18px">'+ (r.data.examples||[]).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';
+  }
+  return h;
+}
+
+addBot('Hi! Tell me what to invoice or bill, in plain English.<br>Try: <i>Invoice John Doe $500 for web design, due in 30 days</i>');
+</script>
+</body>
+</html>
