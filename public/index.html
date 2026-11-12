@@ -143,7 +143,10 @@ function render(data){
     h += '<ul style="margin:0;padding-left:18px">'+ list.map(i=>'<li><code>'+esc(i.id)+'</code> — '+esc(i.recipient)+' · '+esc(i.status)+' · '+esc(i.currency)+' '+esc(i.total)+'</li>').join('')+'</ul>';
   } else if(r.type==='create_order'){
     h += '<div class="kv"><span class="k">order</span><span><code>'+esc(r.data.orderId)+'</code></span>'
-      +'<span class="k">status</span><span>'+esc(r.data.status)+'</span></div>';
+      +'<span class="k">status</span><span>'+esc(r.data.status)+'</span>';
+    if(r.data.amount) h += '<span class="k">amount</span><span><b>'+esc(r.data.currency||'USD')+' '+esc(r.data.amount)+'</b></span>';
+    if(r.data.description) h += '<span class="k">for</span><span>'+esc(r.data.description)+'</span>';
+    h += '</div>';
     if(r.data.approvalUrl) h += '<div style="margin-top:8px"><a href="'+esc(r.data.approvalUrl)+'" target="_blank">Open payment link →</a></div>';
   } else {
     h += '<ul style="margin:6px 0;padding-left:18px">'+ (r.data.examples||[]).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';

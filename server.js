@@ -217,7 +217,14 @@ async function createOrder(p) {
   });
 
   const approve = (order.links || []).find((l) => l.rel === 'approve' || l.rel === 'payer-action');
-  return { orderId: order.id, status: order.status, approvalUrl: approve?.href || null };
+  return {
+    orderId: order.id,
+    status: order.status,
+    amount: amount.toFixed(2),
+    currency,
+    description: String(p.description || 'Payment').slice(0, 127),
+    approvalUrl: approve?.href || null,
+  };
 }
 
 async function runAction(parsed) {
