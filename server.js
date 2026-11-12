@@ -100,11 +100,11 @@ async function aiParse(userMessage) {
     ACTION_SCHEMA,
     'Rules:',
     '- Reply with JSON only. No prose, no markdown fences.',
-    '- Use create_invoice when the user wants to bill someone.',
+    '- Prefer create_order for ANY request to bill/invoice/charge/payment — it produces a real, shareable PayPal payment link and works on every sandbox app.',
     '- Use list_invoices when the user asks about existing/outstanding invoices.',
-    '- Use create_order when the user wants a simple shareable payment link.',
+    '- Use create_invoice ONLY when the user explicitly says "invoice" AND asks to send it to a specific customer email; otherwise use create_order.',
     '- Use help when the intent is unclear.',
-    '- Defaults: currency "USD", dueDays 30.',
+    '- Defaults: currency "USD", dueDays 30',
   ].join('\n');
 
   const res = await fetch(`${AI_BASE_URL}/chat/completions`, {
@@ -229,7 +229,16 @@ async function createOrder(p) {
 
 async function runAction(parsed) {
   switch (parsed.action) {
-    case 'create_invoice': return { type: 'create_invoice', data: await createInvoice(parsed.params || {}) };
+    case 'create_invoice': {
+      try {
+        return { type: 'create_invoice', data: await createInvoice(parsed.params || {}) };
+      } catch (e) {
+        // Invoicing API may be unavailable on a fresh sandbox app; fall back to a
+        // real payment link so the request never fails silently.
+        const d = await createOrder(parsed.params || {});
+        return { type: 'create_order', data: d, from: 'create_invoice_fallback' };
+      }
+    }
     case 'list_invoices': return { type: 'list_invoices', data: await listInvoices() };
     case 'create_order': return { type: 'create_order', data: await createOrder(parsed.params || {}) };
     default: return { type: 'help', data: {
